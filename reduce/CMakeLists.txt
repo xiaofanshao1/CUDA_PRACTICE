@@ -1,0 +1,1 @@
+add_executable(reduce_v0_global_mem reduce_v0_global_mem.cu)

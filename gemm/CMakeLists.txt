@@ -1,0 +1,1 @@
+add_executable(sgemm_v0_global_mem sgemm_v0_global_mem.cu)
