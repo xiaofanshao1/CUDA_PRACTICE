@@ -1,4 +1,4 @@
 add_executable(reduce_v0_global_mem reduce_v0_global_mem.cu)
 add_executable(reduce_v1_shared_mem reduce_v1_shared_mem.cu)
 add_executable(reduce_v2_warp_divergence reduce_v2_warp_divergence.cu)
-#add_executable(reduce_v3_no_bank_conflict reduce_v3_no_bank_conflict.cu)
+add_executable(reduce_v3_no_bank_conflict reduce_v3_no_bank_conflict.cu)
