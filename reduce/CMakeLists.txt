@@ -4,6 +4,7 @@ add_executable(reduce_v2_warp_divergence reduce_v2_warp_divergence.cu)
 add_executable(reduce_v3_no_bank_conflict reduce_v3_no_bank_conflict.cu)
 add_executable(reduce_v4_block_utilization reduce_v4_block_utilization.cu)
 add_executable(reduce_v5_unroll_last_warp reduce_v5_unroll_last_warp.cu)
+add_executable(reduce_v6_unroll_all_warp reduce_v6_unroll_all_warp.cu)
 
 
 #问题：如果链接cuda runtime 和其他库怎么做?
