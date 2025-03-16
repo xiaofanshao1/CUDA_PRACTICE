@@ -6,27 +6,26 @@
 
 #define THREAD_PER_BLOCK 256
 
+/**
+ * 每个block当中有一半线程没事做，只参与了global mem-> shared的运输
+ * 思路:减少block数量，维持block内线程数量。让每个线程做更多，运输两份数据
+ * 
+ */
 __global__ void reduce2(float* d_intput,float * d_output){
+    //处理数据变为原来二倍，这时候 block内线程数 和 data数 并没有对齐，所以特别处理*2
+    float *input_begin_global=d_intput+blockDim.x * blockIdx.x *2;
     __shared__ float input_begin[THREAD_PER_BLOCK];
-
-    float *input_begin_global=d_intput+blockDim.x * blockIdx.x;
-    input_begin[threadIdx.x]=input_begin_global[threadIdx.x];
+    input_begin[threadIdx.x]=input_begin_global[threadIdx.x]+ input_begin_global[threadIdx.x+THREAD_PER_BLOCK];
+    
     __syncthreads();
 
-    //1. 在v当中之前每个warp都是一半执行另一半不执行。这一版当中做出改进，让一个warp尽量做同样的事情
-    //2. 在前128个线程也就是前4个warp都参与计算，后面4个warp不参与。原来交叉线程不做事，现在改变线程做事分布
-    //3. 这是一种非常别扭的做法，线程号和数据号关系难找
     {
-    for(int sg=1;sg<blockDim.x;sg=sg*2){
-        //每组内只一个thread实际工作，计算出需要的thread数目
-        int thread_num=blockDim.x/(sg*2);
-        //安排让前一半的线程工作
-        if(threadIdx.x<thread_num){
-            int group_start=threadIdx.x *2*sg;
-            input_begin[group_start]+= input_begin[group_start+sg];
+        for(int interval=blockDim.x/2;interval>0;interval/=2){
+            if(threadIdx.x<interval){
+                input_begin[threadIdx.x]+=input_begin[threadIdx.x+interval];
+            }
+            __syncthreads();
         }
-        __syncthreads();
-    }
 
     }
     
@@ -41,7 +40,7 @@ bool check(float* a,float*b,int n){
     return true;
 }
 void printArray(float* a,int n){
-    for(int i=0;i<10;i++){
+    for(int i=0;i<10;i++){        
         printf("%f ",a[i]);
     }
     printf("\n");
@@ -55,7 +54,7 @@ int main(){
     float* d_intput;
     cudaMalloc((void**)&d_intput,N*sizeof(float));
     
-    constexpr int block_num=(N+THREAD_PER_BLOCK-1)/THREAD_PER_BLOCK;
+    constexpr int block_num=(N+THREAD_PER_BLOCK-1)/THREAD_PER_BLOCK/2;
     float *h_output= (float*)malloc(block_num*sizeof(float));
    
     float *d_output;
@@ -71,11 +70,12 @@ int main(){
     }
 
     // compute on cpu side
+    // block_num变少一半，而h_input不会变
     {
         for(int i=0;i<block_num;i++){
             float tsum=0;
-            for(int j=0;j<THREAD_PER_BLOCK;j++){
-                tsum+=h_input[THREAD_PER_BLOCK*i+j];
+            for(int j=0;j<2 * THREAD_PER_BLOCK;j++){
+                tsum+=h_input[ 2 * THREAD_PER_BLOCK*i+j];
             }
             h_output[i]=tsum;
         }
