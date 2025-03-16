@@ -39,6 +39,7 @@ int main(){
     constexpr int K=2048;
 
     //size_t的历史是怎么回来的
+    //可以追溯到C的历史，表达平台上最大位数的无符号数 和指针保持一致
     constexpr size_t mem_size_A=M*K*sizeof(float);
     constexpr size_t mem_size_B=K*N*sizeof(float);
     constexpr size_t mem_size_C=M*N*sizeof(float);

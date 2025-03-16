@@ -1,19 +1,34 @@
+
 #include <cstdio>
 #include <cuda.h>
 #include <stdlib.h>
 #include <cuda_runtime.h>
 
+#define THREAD_PER_BLOCK 256
 
-__global__ void reduce0(float* d_intput,float * d_output){
+//问题 targetlink里面都是什么库？
+__global__ void reduce2(float* d_intput,float * d_output){
+    __shared__ float input_begin[THREAD_PER_BLOCK];
 
-    float *input_begin=d_intput+blockDim.x * blockIdx.x;
-    //对于一个block内，sub group是待处理group的一半，每次把所有thread分类映射到group内
+    float *input_begin_global=d_intput+blockDim.x * blockIdx.x;
+    input_begin[threadIdx.x]=input_begin_global[threadIdx.x];
+    __syncthreads();
+
+    //1. 在v当中之前每个warp都是一半执行另一半不执行。这一版当中做出改进，让一个warp尽量做同样的事情
+    //2. 在前128个线程也就是前4个warp都参与计算，后面4个warp不参与。原来交叉线程不做事，现在改变线程做事分布
+    //3. 这是一种非常别扭的做法，线程号和数据号关系难找
+    {
     for(int sg=1;sg<blockDim.x;sg=sg*2){
-        if(threadIdx.x%(sg*2) == 0)
-            //1. 在group内，元素为sg*2  对两个半组的头相加 e.g [0 1 2 3] 0&2  e.g[0 1] 0&1
-            //2. 这里也有一个index小技巧, 0+size/2刚好是一半偏右 而(0+size-1)/2是一半偏左
-            input_begin[threadIdx.x]+= input_begin[threadIdx.x+sg];
+        //每组内只一个thread实际工作，计算出需要的thread数目
+        int thread_num=blockDim.x/(sg*2);
+        //安排让前一半的线程工作
+        if(threadIdx.x<thread_num){
+            int group_start=threadIdx.x *2*sg;
+            input_begin[group_start]+= input_begin[group_start+sg];
+        }
         __syncthreads();
+    }
+
     }
     
     if(threadIdx.x==0)
@@ -21,11 +36,6 @@ __global__ void reduce0(float* d_intput,float * d_output){
 
 }
 bool check(float* a,float*b,int n){
- /**
- * @brief Effective Modern C++ 对于浮点数有特点说明
- * - 一般精度范围为 [1e-5, 1e-9]
- * - 一般应用 1e-5 即可
- */
     for(int i=0;i<n;i++){
         if(abs(a[i]-b[i])>0.005) return false;
     }
@@ -38,21 +48,14 @@ void printArray(float* a,int n){
     printf("\n");
 }
 
-#define THREAD_PER_BLOCK 256
+
 
 int main(){
     const int N=32 * 1024 * 1024;
     float* h_input= (float*)malloc(N*sizeof(float));
-/**
- * @brief 在设备（GPU）上分配内存
- * 
- * 在 C/C++ 中，如果函数需要修改指针的值，必须传递指针的地址（即双重指针）。
- * 如果直接传递 d_input，cudaMalloc 只能修改 d_input 的副本，而不会影响外部的 d_input。
- */
     float* d_intput;
     cudaMalloc((void**)&d_intput,N*sizeof(float));
     
-    //const expr和const有什么区别？ 一个在编译期间求值，另一个在运行期
     constexpr int block_num=(N+THREAD_PER_BLOCK-1)/THREAD_PER_BLOCK;
     float *h_output= (float*)malloc(block_num*sizeof(float));
    
@@ -61,23 +64,8 @@ int main(){
 
     float* result=(float*) malloc(block_num*sizeof(float));
     
-    // initialize the input
+
     {
-/**
- * @quesiton 这个rand是哪里来的? 
- * 
- * @details
- * 生成一个均匀分布的伪随机数,drand48 生成一个均匀分布的伪随机数，范围在 [0.0, 1.0) 之间。
- * 在代码中，`2.0 * drand48() - 1.0` 将随机数的范围扩展到 [-1.0, 1.0)。
- * 
- * drand48 是 POSIX 标准库的一部分，定义在 `<stdlib.h>` 头文件中。
- * 它是基于线性同余算法实现的伪随机数生成器。
- * 
- * @note
- * 在现代 C++ 中，推荐使用 `<random>` 库中的随机数生成器，如 `std::uniform_real_distribution`。
- * 
- * @return double 返回一个在 [0.0, 1.0) 范围内的伪随机数
- */
         for(int i=0;i<N;i++){
             h_input[i]=2.0*drand48()-1.0;
         }
@@ -96,12 +84,10 @@ int main(){
     // compute on GPU
     {
         cudaMemcpy(d_intput,h_input,N*sizeof(float),cudaMemcpyHostToDevice);
-        //这个应该是大写还是小写也可以,这个不这样写怎么填xy?
-        //可以在<<<grid_dim,block_dim>>>直接做，默认是一维
         dim3 Grid(block_num,1);
         dim3 Block(THREAD_PER_BLOCK,1);
         
-        reduce0<<<Grid,Block>>>(d_intput,d_output);
+        reduce2<<<Grid,Block>>>(d_intput,d_output);
     }
     //check & release
     {
