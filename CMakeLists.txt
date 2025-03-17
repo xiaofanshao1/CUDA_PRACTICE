@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.20.0)
 project(cuda_basic_pattern VERSION 0.1.0 LANGUAGES CUDA CXX C)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 # 1. cmake有哪些重大的版本更新？
 #    - CMake 3.0: 引入了新的语法和特性，如 target-based 构建系统。
 #    - CMake 3.5: 支持 CUDA 作为一等公民。
@@ -15,5 +19,5 @@ project(cuda_basic_pattern VERSION 0.1.0 LANGUAGES CUDA CXX C)
 find_package(CUDAToolkit REQUIRED)
 add_subdirectory(reduce)
 add_subdirectory(gemm)
-
+add_subdirectory(attention)
 
