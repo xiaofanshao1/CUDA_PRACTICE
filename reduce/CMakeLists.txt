@@ -7,6 +7,9 @@ add_executable(reduce_v5_unroll_last_warp reduce_v5_unroll_last_warp.cu)
 add_executable(reduce_v6_unroll_all_warp reduce_v6_unroll_all_warp.cu)
 add_executable(reduce_v7_multi_add reduce_v7_multi_add.cu)
 
+add_executable(reduce_v8_warp_shuffle reduce_v8_warp_shuffle.cu)
+
+
 
 #问题：如果链接cuda runtime 和其他库怎么做?
 # target_link_libraries(reduce_v4_block_utilization PRIVATE CUDA::cudart CUDA::cublas)
