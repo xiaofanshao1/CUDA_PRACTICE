@@ -103,7 +103,7 @@ class SimplifiedAttention(nn.Module):
         
         # 计算QK^T / sqrt(d)
         '''
-         [1,32,10,10]  主要关注[10,10] [seq_len,seq_len] 交叉矩阵，每两个词的关联分数
+         [1,32,10,10]  主要关注[10,10] [seq_len,seq_len] 交叉矩阵，每两个词的关联分数 [1,32,10,128] X [1,32,128,10]
         '''
         scores = torch.matmul(queries, keys.transpose(-2, -1)) / math.sqrt(self.head_dim)
         
@@ -117,21 +117,32 @@ class SimplifiedAttention(nn.Module):
 
         2. 把mask扩张纬度并进行广播到原来矩阵[1,32,10,10]
             mask[None,None,:,:]->[1, 1, seq_len, seq_len]
-        3. 保留主对角线及下方矩阵，上方变为-inf
-            i=j是主对角线
+        3. 保留主对角线及下方矩阵，上方变为-inf 原因是后面算概率分布时exp(-inf)->0
+            i=j是主对角线，这个和数学坐标系区分
         '''
         mask = torch.triu(torch.ones(seq_len, seq_len), diagonal=1).bool()
         scores = scores.masked_fill(mask[None, None, :, :], float('-inf'))
         
-        # Softmax归一化
+        # Softmax归一化，注意只有最后一行是完整token length的概率分布 [1,32,10,10]
         attn_weights = torch.softmax(scores, dim=-1)
         
         # ------ 步骤5：加权求和并重组输出 ------
-        attn_output = torch.matmul(attn_weights, values)  # [1,32,10,128]
+        '''
+        对value求期望 [10,10]X[10,128] 对概率分布*v 求期望 获得截止到每个length时的期望v向量  128纬度    1,32,10,128
+           atten_weights  [1,32,10,10] X value[1,32,10,128]   最后一个[1,10] X[10,128] -> [1,128] 得到期望v向量
+        '''
+        attn_output = torch.matmul(attn_weights, values)  # [1,32,10,128] 
+
+
         attn_output = attn_output.transpose(1, 2)          # [1,10,32,128]
         attn_output = attn_output.reshape(batch_size, seq_len, -1)  # [1,10,4096]
         
         # 最终线性投影
+        '''
+        最后需要一次线性的原因？
+        32 * 128 = 4096 每个头独立计算之后，最后用线性层来进行特征交叉
+        这个地方真正有效的就是[1,10,4096]的最后一个length的
+        '''
         return self.wo(attn_output)
 
 # 测试用例
