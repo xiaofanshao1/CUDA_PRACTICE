@@ -12,7 +12,7 @@ set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 
 # 添加可执行文件
 add_executable(libtorch_test 
-libtorch_test.cpp.cpp  # 如果是CUDA代码需要改成.cu扩展名
+libtorch_test.cpp  # 如果是CUDA代码需要改成.cu扩展名
 )
 # 链接Torch库
 target_link_libraries(libtorch_test

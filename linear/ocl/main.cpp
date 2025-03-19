@@ -83,10 +83,10 @@ int main() try {
 
    // 加载内核源码
     std::ifstream file("/root/projects/cuda_practice/linear/ocl/linear_v0.cl");
-    if (!file.is_open()) {
-        std::cerr << "错误：无法打开内核文件！" << std::endl;
-        throw std::runtime_error("Failed to open kernel file");
-    }
+    // if (!file.is_open()) {
+    //     std::cerr << "错误：无法打开内核文件！" << std::endl;
+    //     throw std::runtime_error("Failed to open kernel file");
+    // }
 
     std::string kernel_code(
         (std::istreambuf_iterator<char>(file)),
@@ -94,10 +94,10 @@ int main() try {
     );
     file.close();
 
-    if (kernel_code.empty()) {
-        std::cerr << "错误：内核文件内容为空！" << std::endl;
-        throw std::runtime_error("Kernel file is empty");
-    }
+    // if (kernel_code.empty()) {
+    //     std::cerr << "错误：内核文件内容为空！" << std::endl;
+    //     throw std::runtime_error("Kernel file is empty");
+    // }
 
     // 创建程序
     const char* src = kernel_code.c_str();
@@ -107,15 +107,15 @@ int main() try {
 
     // 构建程序
     err = clBuildProgram(program, 1, &env.device, nullptr, nullptr, nullptr);
-    if (err != CL_SUCCESS) {
-        // 获取构建日志
-        size_t log_size;
-        clGetProgramBuildInfo(program, env.device, CL_PROGRAM_BUILD_LOG, 0, nullptr, &log_size);
-        std::vector<char> log(log_size);
-        clGetProgramBuildInfo(program, env.device, CL_PROGRAM_BUILD_LOG, log_size, log.data(), nullptr);
-        std::cerr << "Program build error: " << std::string(log.data(), log_size) << std::endl;
-        CHECK_CL_ERROR(err, "Program build failed");
-    }
+    // if (err != CL_SUCCESS) {
+    //     // 获取构建日志
+    //     size_t log_size;
+    //     clGetProgramBuildInfo(program, env.device, CL_PROGRAM_BUILD_LOG, 0, nullptr, &log_size);
+    //     std::vector<char> log(log_size);
+    //     clGetProgramBuildInfo(program, env.device, CL_PROGRAM_BUILD_LOG, log_size, log.data(), nullptr);
+    //     std::cerr << "Program build error: " << std::string(log.data(), log_size) << std::endl;
+    //     CHECK_CL_ERROR(err, "Program build failed");
+    // }
 
     // 创建内核
     cl_kernel kernel = clCreateKernel(program, "linear_kernel", &err);
