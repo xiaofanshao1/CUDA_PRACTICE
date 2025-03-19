@@ -17,7 +17,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #    - 语言列表可以是 `C`、`CXX`、`CUDA` 等，用空格分隔。
 
 find_package(CUDAToolkit REQUIRED)
-add_subdirectory(reduce)
-add_subdirectory(gemm)
-add_subdirectory(attention)
+#add_subdirectory(reduce)
+#add_subdirectory(gemm)
+#add_subdirectory(attention)
+add_subdirectory(linear)
 
