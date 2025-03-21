@@ -25,7 +25,17 @@ void sgemm_cpu(float *A_ptr,float *B_ptr,float* C_ptr,
     }
 }
 __global__ void cuda_sgemm(float* A_ptr,float* B_ptr, float* C_ptr,const int M,const int K,const int N){
+    float* A_begin= A_ptr + blockIdx.y * blockDim.y * K;
+    float* B_begin= B_ptr + blockIdx.x * blockDim.x;
 
+    float sum=0.f;
+    //Block [16,16] 256个线程，每次x和y两个线程bundle在一起. C block也是[16,16] 所以256个线程，也就是[x,y]号线程完成C[x,y]的dot(A,B)内积
+    for(int k=0;k < K; k++){
+        sum+= A_begin[threadIdx.y*K+k] * B_begin[k*N+threadIdx.x];
+    }
+    const int x=threadIdx.x+blockDim.x*blockIdx.x;
+    const int y=threadIdx.y+blockDim.y*blockIdx.y;
+    C_ptr[y*N+x]=sum;
 }
 
 bool checkMatrix(float* a,float* b,const int m, const int n){
