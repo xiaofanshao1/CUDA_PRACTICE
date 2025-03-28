@@ -45,7 +45,7 @@ __global__ void cuda_sgemm(float* A_ptr,float* B_ptr, float* C_ptr,const int M,c
 
 float checkMatrix(float* a,float* b,const int m, const int n){
     //a from cpu, b from gpu
-    int i,j; bool bHit{};
+    bool bHit{};
     float max_diff=0.f;
     for(int i=0;i<m;i++){
         for(int j=0;j<n;j++){

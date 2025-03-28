@@ -20,7 +20,7 @@
 |           |                                         |                   |
 | Attention | Fuse                                    | gemm+softmax fuse |
 
-##### CPU Tiling verify example
+##### CPU Tiling verify simple example
 
 > reference: https://zhuanlan.zhihu.com/p/31147993255
 
@@ -44,7 +44,7 @@ for outer_i in range(12 // 4):
             for inner_j in range(4):
             print(AT_[outer_i, outer_j, inner_i, inner_j])
 
-#加入cache
+#加入shared mem
 a = np.zeros((4, 4), dtype=A.dtype)
 for outer_i in range(12 // 4):
     for outer_j in range(16 // 4):
