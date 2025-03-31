@@ -5,9 +5,49 @@
 
 /**
  * block(16,16)->block(8,32) 对于横向8个线程一次4个float，可以一次拿满
- * 
  */
+
 // Q1: 这个为什么这样写呢？
+// 1. 将一个float* 指针指向连续的4个float内存指针 float4*
+//      例如float data[4] = {1.0f, 2.0f, 3.0f, 4.0f};float4 vec = FETCH_FLOAT4(data[0]); 
+// 2. 步骤解释如下
+
+/* 分步解析（假设调用 FETCH_FLOAT4(some_float)）：
+ * 
+ * 1. &(pointer) 
+ *    - 取 pointer 的地址（pointer可以是单个float或float数组中的元素）
+ *    - 例如：若 pointer = float_array[0]，则 &pointer 得到 &float_array[0]（类型：float*）
+ * 
+ * 2. reinterpret_cast<float4*>(...)
+ *    - 强制类型转换：将 float* 指针转换为 float4* 指针
+ *    - 关键点：不改变内存实际数据，仅改变编译器对这段内存的解释方式
+ *    - 例如：float* → float4* 表示"将接下来的16字节（4*float）当作一个float4结构体"
+ * 
+ * 3. [0]
+ *    - 对转换后的 float4* 指针取第一个元素
+ *    - 由于 float4* 是指向 float4 的指针，[0] 即解引用为 float4 对象
+ *    - 效果：从 pointer 的地址开始，连续读取4个float到float4的x/y/z/w成员
+ * 
+ * 示例：
+ *   float data[4] = {1.0f, 2.0f, 3.0f, 4.0f};
+ *   float4 vec = FETCH_FLOAT4(data[0]); 
+ *   // vec.x = 1.0f, vec.y = 2.0f, vec.z = 3.0f, vec.w = 4.0f
+ * 
+ * 注意事项：
+ *   - 内存对齐：pointer 的地址必须是16字节对齐（即地址 % 16 == 0）
+ *   - 安全边界：pointer 后必须有至少3个连续float，否则越界
+ */
+
+// ==== reinterpret_cast vs static_cast 核心区别 ====
+// 1. reinterpret_cast:
+//    - 用途: 内存二进制位的完全重新解释（无关类型强制转换）
+//    - 特点: 高风险、无类型检查、编译期直接操作内存
+//    - 场景: 指针类型强制转换（如 float* -> float4*）
+// 2. static_cast:
+//    - 用途: 相关类型间的安全转换（需编译器已知转换规则）
+//    - 特点: 相对安全、有类型检查、可能插入运行时逻辑
+//    - 场景: 数值类型转换、基类/派生类转换
+
 #define FETCH_FLOAT4(pointer) (reinterpret_cast<float4*> (&(pointer))[0])
 
 template<unsigned int M_NUM_PER_BLOCK, unsigned int K_NUM_PER_BLOCK, unsigned int N_NUM_PER_BLOCK,unsigned int NUM_PER_THREAD>
