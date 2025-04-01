@@ -3,6 +3,7 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
+
 #define FETCH_FLOAT4(pointer) (reinterpret_cast<float4*> (&(pointer))[0])
 
 template<unsigned int M_NUM_PER_BLOCK, unsigned int K_NUM_PER_BLOCK, unsigned int N_NUM_PER_BLOCK,
@@ -27,8 +28,8 @@ __global__ void cuda_sgemm(float* A_ptr, float* B_ptr, float* C_ptr, const int M
     float sum[M_NUM_PER_THREAD][N_NUM_PER_THREAD]{};
     
     for(int s=0;s<K;s+=K_NUM_PER_BLOCK){
-        //注意这个坐标控制，第一次没有算好
-        //
+        //1. 对SplitM 的RM tile进行遍历,ty标记->regTile的row tx标记->regTile的col  
+        //2. regTile内的col方面通过float4一次直接load好，而row方面需要分别处理，使用i来循环 tile内的row
         for(int i=0;i<M_NUM_PER_THREAD;i++){
             FETCH_FLOAT4(a_shared[ty*M_NUM_PER_THREAD+i][tx*K_NUM_PER_THREAD])=
                 FETCH_FLOAT4(A_begin[K*(ty*M_NUM_PER_THREAD+i)+tx*K_NUM_PER_THREAD+s]);
