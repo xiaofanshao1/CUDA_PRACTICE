@@ -3,7 +3,6 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
-
 #define FETCH_FLOAT4(pointer) (reinterpret_cast<float4*> (&(pointer))[0])
 
 template<unsigned int M_NUM_PER_BLOCK, unsigned int K_NUM_PER_BLOCK, unsigned int N_NUM_PER_BLOCK,
