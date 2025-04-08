@@ -1,1 +1,4 @@
 build/
+.auto-coder/
+/actions/
+/output.txt
