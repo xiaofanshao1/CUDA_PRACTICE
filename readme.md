@@ -63,6 +63,4 @@ for outer_i in range(12 // 4):
 
 ##### reference
 
-> verify reference: https://zhuanlan.zhihu.com/p/31147993255
-
-> sgemm: https://www.bilibili.com/video/BV1DBqgY7Esf/?spm_id_from=333.1387.search.video_card.click&vd_source=d99fb874fa9e85fe5793ec3fa65ab064
+1. [使用ndarray api描述算子kernel](https://zhuanlan.zhihu.com/p/31147993255) 
