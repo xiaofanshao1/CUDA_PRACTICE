@@ -82,7 +82,7 @@ int main() try {
                           CL_MEM_WRITE_ONLY);
 
    // 加载内核源码
-    std::ifstream file("/root/projects/cuda_practice/linear/ocl/linear_v0.cl");
+    std::ifstream file("/root/projects/cuda_practice/linear/ocl/dense32_gemm_.cl");
     // if (!file.is_open()) {
     //     std::cerr << "错误：无法打开内核文件！" << std::endl;
     //     throw std::runtime_error("Failed to open kernel file");

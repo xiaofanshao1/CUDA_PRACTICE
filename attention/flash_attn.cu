@@ -1,4 +1,4 @@
-//reference: https://github.com/tspeterkim/flash-attention-minimal/blob/main/flash.cu
+//Adapted from: https://github.com/tspeterkim/flash-attention-minimal/blob/main/flash.cu
 #include <torch/types.h>
 #include <cuda.h>
 #include <cuda_runtime.h>

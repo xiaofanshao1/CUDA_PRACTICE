@@ -1,6 +1,6 @@
-# CUDA Patterns
+# CUDA Study
 
-##### show case basic cuda patterns
+#### basic pattern
 
 | OP        |                                         | Comment           |
 | --------- | --------------------------------------- | ----------------- |
@@ -16,13 +16,19 @@
 |           | Reg Tiling: Dot product-> Outer Product |                   |
 |           | PingPong buffer/ double buffer          |                   |
 |           |                                         |                   |
-| Transpose | Swizzle & bank conflict                 |                   |
+| Transpose | 访存合并                                |                   |
 |           |                                         |                   |
 | Attention | Fuse                                    | gemm+softmax fuse |
 
-##### CPU Tiling verify simple example
 
-> reference: https://zhuanlan.zhihu.com/p/31147993255
+
+##### Kernels around llama inference
+
+![image-20250407231909099](./assets/image-20250407231909099.png)
+
+
+
+##### CPU Tiling verify simple example
 
 使用numpy和循环来模拟验证GPU数据分块逻辑合理性，矩阵分块 = reshape+transpose + for indexing
 
@@ -55,3 +61,8 @@ for outer_i in range(12 // 4):
 
 ```
 
+##### reference
+
+> verify reference: https://zhuanlan.zhihu.com/p/31147993255
+
+> sgemm: https://www.bilibili.com/video/BV1DBqgY7Esf/?spm_id_from=333.1387.search.video_card.click&vd_source=d99fb874fa9e85fe5793ec3fa65ab064

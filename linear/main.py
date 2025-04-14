@@ -7,7 +7,7 @@ from torch.utils.cpp_extension import load
 
 linear_cuda = load(
     name="linear_cuda",  
-    sources=["linear_v0_py.cu"], 
+    sources=["dense32_gemm.cu"], 
     extra_cflags=["-O2"],  # 额外编译选项
     verbose=True  # 显示编译日志
 )
