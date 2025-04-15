@@ -18,3 +18,9 @@
 #     "${TORCH_LIBRARIES}"
 # )
 add_subdirectory(ocl)
+add_executable(test_cublass test_cublass.cu)
+target_link_libraries(test_cublass PRIVATE CUDA::cublas CUDA::cudart)  
+
+
+add_executable(hgemm_v1_wmma_m16n16k16_native_kernel hgemm_v1_wmma_m16n16k16_native_kernel.cu)
+target_link_libraries(hgemm_v1_wmma_m16n16k16_native_kernel PRIVATE common CUDA::cublas CUDA::cudart)  
