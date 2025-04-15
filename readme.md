@@ -1,4 +1,4 @@
-# CUDA Study
+# CUDA Notes
 
 #### basic pattern
 
