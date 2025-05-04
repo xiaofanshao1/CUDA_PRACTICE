@@ -1,3 +1,6 @@
 [submodule "CUDA-Learn-Notes"]
 	path = CUDA-Learn-Notes
 	url = https://github.com/xlite-dev/CUDA-Learn-Notes.git
+[submodule "ggml"]
+	path = thirdparty/ggml
+	url = https://github.com/ggerganov/ggml.git
