@@ -1,0 +1,2 @@
+add_executable(transpose_native_v0 transpose_native_v0.cu)
+add_executable(transpose_float4_v1 transpose_float4_v1.cu)
