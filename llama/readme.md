@@ -1,6 +1,6 @@
 ## Llama related kernels
 
-> default: internlm2-1_8b   **hidden_size**：2048  **vocab_size**：92544
+> e.g default: internlm2-1_8b   **hidden_size**：2048  **vocab_size**：92544
 
 #### Kernels
 
@@ -10,21 +10,56 @@
 - topK
 
 
+
+#### GGML inference
+
+
+
 #### Shape inference
 
-- `token_embd`  weight   `[92544, 2048]` ` [vocab_size, hidden_dim]` , `[seq_len]` -> `[seq_len, hidden_dim]`
+> 模型结构： https://github.com/huggingface/transformers/blob/main/src/transformers/models/llama/modeling_llama.py
 
-| Layer/Op           | Input Data Shape  | Output Data Shape  | 说明                                                         |
-| ------------------ | ----------------- | ------------------ | ------------------------------------------------------------ |
-| `token_embd`       | `[seq_len]`       | `[seq_len, 2048]`  | 输入 token IDs → 嵌入为 2048 维向量                          |
-| `blk.0.attn_norm`  | `[seq_len, 2048]` | `[seq_len, 2048]`  | LayerNorm：保持形状不变                                      |
-| `blk.0.attn`       | `[seq_len, 2048]` | `[seq_len, 2048]`  | 多头注意力：输入输出同维度（Q/K/V 内部计算维度压缩，但最终合并还原） |
-| `blk.0.ffn_norm`   | `[seq_len, 2048]` | `[seq_len, 2048]`  | LayerNorm：保持形状不变                                      |
-| `blk.0.ffn`        | `[seq_len, 2048]` | `[seq_len, 2048]`  | SwiGLU FFN：2048 → 8192 → 2048（内部扩展 4 倍后投影还原）    |
-| `...`              | `...`             | `...`              | 重复 `blk.0` 至 `blk.23`（共 24 层）                         |
-| `output_norm`      | `[seq_len, 2048]` | `[seq_len, 2048]`  | 最终 LayerNorm                                               |
-| `output` (lm_head) | `[seq_len, 2048]` | `[seq_len, 92544]` | 投影到词汇表维度（预测下一个 token 的 logits）               |
-    
+ Input ids after tokenizer encode  [num_tokens]    e.g Hello my name is >>>  [24912,922,1308,382]
+
+<img src="./assets/image-20250505141129270.png" alt="image-20250505141129270" style="zoom:33%;" />
+
+- embedding>>> [num_tokens, q_hidden_units]  
+
+**Prefill**
+
+- Prefill Attention
+
+  - RMSNorm	>>> [num_tokens, q_hidden_units] 
+
+  - Linear_Q_K_V  >>>[num_tokens, qkv_hidden_units] 
+
+  - biasAddAndPaddingAndRope>>>[bs,seqlen,kv_head_num,head_size]
+
+    经过 padding，维度统一
+
+  ---
+
+  - context Attention >>>[num_tokens,q_hidden_units]
+
+    算完 attention 就把 padding 去除
+
+  ---
+
+  - AddResidualAnd RMSNorm>>>[num_tokens, q_hidden_units]
+
+- FFN
+  - linear_gate & linear_up >>> [2,bs,inter_size]
+  - SiLU>>>[bs,inter_size]
+  - Linear_down>>>[bs,q_hidden_units]
+- Sample layer
+  - LMhead >>> [bs, vocab_size] 
+  - topK>>>[bs,K]
+  - Sampling>>>[bs]
+
+> `q_hidden_units=q_head_num * head_size`
+>
+> `qkv_hidden_units=(q_head +2*kv_head_num)*head_size`
+
 
 
 ##### References
@@ -35,5 +70,11 @@
 4. [llama.cpp CUDA版本的源码解析](https://www.zhihu.com/question/589100471/answer/3276334273)
 5. [LLM-engineer](https://github.com/RussWong/LLM-engineering)
 6. [使用CUDA解决和加速TopK问题](https://www.bilibili.com/video/BV1nF411D7Fh/?spm_id_from=333.337.search-card.all.click&vd_source=d99fb874fa9e85fe5793ec3fa65ab064)
-7. llama.cpp源码解读--cgraph计算图与sched后端调度机制详解 https://zhuanlan.zhihu.com/p/1893801096918585567
-8. ggml   https://zhuanlan.zhihu.com/p/19968327329
+7. [llama.cpp源码解读--cgraph计算图与sched后端调度机制详解](https://zhuanlan.zhihu.com/p/1893801096918585567) 
+8. [llama.cpp源码解读--ggml框架学习](https://zhuanlan.zhihu.com/p/19968327329)
+9. [GGML-Tutorial](https://github.com/Yangxiaoz/GGML-Tutorial)
+10. [使用CUDA解决和加速TopK问题](https://www.bilibili.com/video/BV1nF411D7Fh/?spm_id_from=333.337.search-card.all.click&vd_source=d99fb874fa9e85fe5793ec3fa65ab064)
+11. [Llama.cpp 代码浅析（一）：并行机制与KVCache](https://zhuanlan.zhihu.com/p/670515231)
+12. [llama.cpp源码解读--cgraph计算图与sched后端调度机制详解](https://zhuanlan.zhihu.com/p/1893801096918585567)
+13. [llama.cpp CUDA版本的源码解析](https://www.zhihu.com/question/589100471/answer/3276334273)
+14. [nsight system profile](https://zhuanlan.zhihu.com/p/691307737)

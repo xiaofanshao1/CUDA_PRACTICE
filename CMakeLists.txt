@@ -22,7 +22,7 @@ set(CMAKE_CUDA_ARCHITECTURES "86")  # 计算能力8.6
 
 #add_subdirectory(common)
 #add_subdirectory(reduce)
-#add_subdirectory(gemm)
+#add_subdirectory(sgemm)
 
 #add_subdirectory(attentin)
 #add_subdirectory(linear)
