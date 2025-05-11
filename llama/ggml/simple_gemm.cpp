@@ -86,7 +86,7 @@ struct simple_model {
         ctx = ggml_init(params);
         // create tensors
 
-        A = ggml_new_tensor_2d(ctx, GGML_TYPE_F32, sgemm_K, sgemm_M);
+        A = ggml_new_tensor_2d(ctx, GGML_TYPE_Q8_0, sgemm_K, sgemm_M);
         B = ggml_new_tensor_2d(ctx, GGML_TYPE_F32, sgemm_K, sgemm_N);
         C = ggml_new_tensor_2d(ctx, GGML_TYPE_F32, sgemm_M, sgemm_N);
 

@@ -5,6 +5,25 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "C++ Debug: simple-sgemm (CPU)",
+            "type": "cppdbg",                 // 使用 GDB/LLDB 调试器
+            "request": "launch",
+            "program": "${workspaceFolder}/build/llama/ggml/simple-sgemm",  // 替换为你的实际路径
+            "args": ["cpu"],                       // 可传递命令行参数（如 ["-v", "input.txt"]）
+            "stopAtEntry": false,             // 是否在 main() 开始处暂停
+            "cwd": "${workspaceFolder}",      // 工作目录
+            "environment": [],                // 环境变量（如需）
+            "externalConsole": false,         // 使用 VSCode 内置终端
+            "MIMode": "lldb",                 // macOS 用 lldb，Linux 改为 "gdb"
+            "setupCommands": [
+                {
+                    "description": "启用 pretty-printing",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
             "name": "Python Debugger: Current File",
             "type": "debugpy",
             "request": "launch",

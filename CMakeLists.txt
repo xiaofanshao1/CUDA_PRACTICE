@@ -1,9 +1,12 @@
 cmake_minimum_required(VERSION 3.20.0)
-project(cuda_basic_pattern VERSION 0.1.0 LANGUAGES CUDA CXX C)
+project(cuda_basic_pattern VERSION 0.1.0 LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# 定义选项
+option(USE_CUDA "Enable CUDA backend" OFF)
+option(USE_METAL "Enable Metal backend" OFF)
 
 # 1. cmake有哪些重大的版本更新？
 #    - CMake 3.0: 引入了新的语法和特性，如 target-based 构建系统。
@@ -16,9 +19,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #    - CMake 不区分大小写，但推荐使用大写以提高可读性。
 #    - `LANGUAGES` 是一个关键字，用于指定项目的编程语言。
 #    - 语言列表可以是 `C`、`CXX`、`CUDA` 等，用空格分隔。
+if(USE_CUDA)
+    enable_language(CUDA)  # 动态启用 CUDA
+    find_package(CUDAToolkit REQUIRED)
+    set(CMAKE_CUDA_ARCHITECTURES "86")  # 计算能力8.6
+endif()
 
-find_package(CUDAToolkit REQUIRED)
-set(CMAKE_CUDA_ARCHITECTURES "86")  # 计算能力8.6
+
+
 
 #add_subdirectory(common)
 #add_subdirectory(reduce)
@@ -26,6 +34,6 @@ set(CMAKE_CUDA_ARCHITECTURES "86")  # 计算能力8.6
 
 #add_subdirectory(attentin)
 #add_subdirectory(linear)
-add_subdirectory(transpose)
-#add_subdirectory(llama)
+#add_subdirectory(transpose)
+add_subdirectory(llama)
 

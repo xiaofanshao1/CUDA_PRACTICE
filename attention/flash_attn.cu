@@ -1,4 +1,5 @@
 //Adapted from: https://github.com/tspeterkim/flash-attention-minimal/blob/main/flash.cu
+//add notes for learning
 #include <torch/types.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
@@ -8,15 +9,17 @@ void forward_kernel(const float* Q, const float* K, const float* V, const int N,
                     const int Tc, const int Tr, const int Bc, const int Br, const float softmax_scale,
                     float* l, float *m, float* O) {
     int tx = threadIdx.x;
-    int bx = blockIdx.x; int by = blockIdx.y;  // batch and head index
+    int bx = blockIdx.x; int by = blockIdx.y;  // batch and head index,所有 block 内算 attention，充分block并行
 
+    // Q (B,nh,N,d) -> Qi (Br,d)
     // Offset into Q,K,V,O,l,m - different for each batch and head
     int qkv_offset = (bx * gridDim.y * N * d) + (by * N * d);  // gridDim.y = nh
     int lm_offset = (bx * gridDim.y * N) + (by * N);  // offset for l and m
 
     // Define SRAM for Q,K,V,S
     extern __shared__ float sram[];
-    int tile_size = Bc * d;  // size of Qi, Kj, Vj
+    
+    int tile_size = Bc * d;  // size of Qi, Kj, Vj for Bc==Br
     float* Qi = sram;
     float* Kj = &sram[tile_size];
     float* Vj = &sram[tile_size * 2];
@@ -41,6 +44,7 @@ void forward_kernel(const float* Q, const float* K, const float* V, const int N,
             float row_l_prev = l[lm_offset + (Br * i) + tx];
 
             // S = QK^T, row_m = rowmax(S)
+            // 32个线程按照列向量一起向右迭代，注意tx是竖直方向,y 是水平方向，所以y < Bc
             float row_m = -INFINITY;
             for (int y = 0; y < Bc; y++) {
                 float sum = 0;
@@ -100,6 +104,11 @@ torch::Tensor forward(torch::Tensor Q, torch::Tensor K, torch::Tensor V) {
     l = l.to(device); m = m.to(device);
 
     // Calculate SRAM size needed per block
+    //   Qi = Br * d * size(float)
+    //   Kj = Bc * d * size(float)
+    //   Vj = Bc * d * size(float)
+    //   Sij = Br * Bc * size(float)
+    // 最后的 Oi reuse Qi的空间
     const int sram_size = (3 * Bc * d * sizeof(float)) + (Bc * Br * sizeof(float));
     int max_sram_size;
     cudaDeviceGetAttribute(&max_sram_size, cudaDevAttrMaxSharedMemoryPerBlock, 0);
